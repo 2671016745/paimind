@@ -1,0 +1,31 @@
+# macOS Apple Silicon (arm64) 依赖 / macOS Apple Silicon (arm64) dependencies
+#
+# 与 requirements.txt 的区别：
+#   * onnxruntime 在 Apple Silicon 上默认就是 arm64 原生包，无需额外指定；
+#     推理后端优先级为 Metal EP → CoreML EP → CPU EP（见 core/inference/builtin.py）。
+#   * PySide6 提供 universal2 wheel，M 系列与 Intel Mac 都能装。
+#   * 不需要 onnxruntime-gpu（Apple 没有 CUDA）。
+#
+# Differences from requirements.txt:
+#   * onnxruntime ships an arm64-native wheel here; the provider order becomes
+#     Metal EP -> CoreML EP -> CPU EP (see core/inference/builtin.py).
+#   * PySide6 ships a universal2 wheel (works on both M-series and Intel Macs).
+#   * No onnxruntime-gpu (Apple has no CUDA).
+
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+pydantic==2.14.2
+pydantic-settings==2.16.2
+pyyaml==6.0.3
+requests==2.34.2
+httpx==0.28.1
+huggingface_hub==2.4.0
+keyring==25.7.0
+onnxruntime==1.31.1
+tokenizers==0.23.3
+numpy==2.5.4
+PySide6==6.12.0
+python-multipart==0.0.33
+
+pytest==9.2.0
+pytest-asyncio==1.4.1

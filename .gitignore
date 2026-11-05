@@ -1,0 +1,75 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# --- 虚拟环境 / Virtualenvs ---
+.venv/
+venv/
+.venv-vllm/
+.vllm-venv/
+
+# --- 本机工具链（Flutter SDK / Android SDK / Gradle / 离线轮子，体积巨大）---
+# Local toolchain: Flutter SDK, Android SDK, Gradle, offline wheels.
+.tools/
+
+# --- Flutter / Dart ---
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+windows/flutter/ephemeral/
+android/.gradle/
+android/local.properties
+ios/Pods/
+
+# --- 本地配置（只提交 config.example.yaml）---
+# Local config; only config.example.yaml is committed.
+config.yaml
+
+# --- 运行时数据（缓存、用量、状态、隐私确认）---
+# Runtime data: caches, usage, state, privacy ack.
+data/
+models/
+!models/.gitkeep
+!models/checksums.json
+*.onnx
+*.onnx.data
+*.gguf
+*.part
+
+# --- 密钥 / Secrets（绝不入库 / never commit）---
+*.key
+*.pem
+.env
+.secrets.json
+
+# --- 日志 / Logs ---
+*.log
+logs/
+
+# --- 编辑器 / Editors ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# --- 打包产物 / Packaging artefacts ---
+target/
+*.spec
+*.dmg
+*.msi
+*.zip
+dist-mobile/
+
+# --- 测试临时目录 / Test temp dirs ---
+paimind-test-*
+tests-tmp-*
+dbg-data/
+dbg-models/

@@ -1,0 +1,19 @@
+# Ollama Modelfile —— 把 GGUF 导入 Ollama
+# Import a GGUF into Ollama.
+#
+#   ollama create qwen2.5-1.5b -f deploy/ollama.Modelfile
+#
+# FROM 指向本地 GGUF 路径；可用 PARAMETER 覆盖采样参数。
+# FROM points at a local GGUF; PARAMETER overrides sampling defaults.
+
+FROM ./qwen2.5-1.5b-instruct-q4_k_m.gguf
+
+# 决策任务用较低温度，输出更稳定 / lower temperature for stable decisions
+PARAMETER temperature 0.6
+
+# 上下文 4096，足够「问题 + 选项 + 参考资料」/ enough for question + options + references
+PARAMETER num_ctx 4096
+
+# 停止词：避免模型续写无关内容 / stop tokens prevent rambling
+PARAMETER stop <|im_end|>
+PARAMETER stop <|end|>

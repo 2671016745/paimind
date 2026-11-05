@@ -1,0 +1,19 @@
+{
+  "name": "应急食品 paimind",
+  "short_name": "应急食品",
+  "description": "本地小模型决策助手：本地优先，必要时联网。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#14161B",
+  "theme_color": "#14161B",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

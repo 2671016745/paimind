@@ -1,0 +1,258 @@
+# ============================================================================
+# paimind 配置文件示例 / paimind configuration example
+# 复制为 config.yaml 后按需修改 / Copy to config.yaml and edit as needed.
+#
+# 任何缺失的键都会回落到 core/config.py 里的内置默认值，所以空文件也能跑。
+# Any missing key falls back to the built-in defaults in core/config.py, so an
+# empty file still works.
+#
+# 安全约定 / Security: 这里只写「引用名」，绝不写密钥本身。
+#                       Secrets are referenced by name only, never stored here.
+# ============================================================================
+
+app:
+  name: paimind                 # 包名 / package name
+  display_name: 应急食品         # 界面显示名 / UI display name
+  version: 0.0.1
+  log_level: INFO               # DEBUG | INFO | WARNING | ERROR
+  models_dir: models            # 模型目录（相对仓库根）/ model directory
+  data_dir: data                # 运行时数据（缓存、用量、状态）/ runtime data
+  inference_threads: auto       # auto = min(CPU核数-1, 4)
+  unload_after_idle_minutes: 5  # 桌面空闲多久卸载模型 / idle unload (desktop)
+  low_memory_context: 1024      # 低内存模式上下文上限 / low-memory context cap
+
+# ---------------------------------------------------------------------------
+# 档位 / Tiers
+# 阈值集中在这里，改这里就能调整判定，不用动代码。
+# All thresholds live here — tune behaviour without touching code.
+# ---------------------------------------------------------------------------
+tiers:
+  # Apple Silicon 统一内存的保守系数：GPU 与 CPU 共用同一池，标称 8GB 实际约 6.8GB。
+  # Conservative factor for Apple Silicon unified memory (GPU shares the pool).
+  apple_silicon_memory_factor: 0.85
+  # 调试项：开启后仍做硬校验，只是允许绕过部分软限制。默认 false。
+  # Debug switch: hard checks still apply. Default false.
+  allow_force_load: false
+  disk_headroom_percent: 30     # 下限含 30% 余量 / thresholds include 30% headroom
+
+  L0:
+    params: 0.5B
+    disk_mb: 300
+    peak_memory_gb: 1.2
+    display_name: L0 超小档
+    suggestion: 老手机、低配本、纯 CPU
+    min_available_memory_gb: 1.5
+    min_disk_mb: 500
+    cpu_x86_avx2: false
+    gpu_vram_gb: 0
+    gpu_optional: true
+  L1:
+    params: 1.5B
+    disk_mb: 1000
+    peak_memory_gb: 2.8
+    display_name: L1 基础档
+    suggestion: 主流手机、普通笔记本
+    min_available_memory_gb: 3
+    min_disk_mb: 1500
+    cpu_x86_avx2: true
+    gpu_vram_gb: 0
+    gpu_optional: true
+  L2:
+    params: 3B
+    disk_mb: 2000
+    peak_memory_gb: 5
+    display_name: L2 均衡档
+    suggestion: 中端台式 / 核显本
+    min_available_memory_gb: 6
+    min_disk_mb: 3000
+    cpu_x86_avx2: true
+    gpu_vram_gb: 0
+    gpu_optional: true
+  L3:
+    params: 7B
+    disk_mb: 4500
+    peak_memory_gb: 10
+    display_name: L3 大档
+    suggestion: 独显台式
+    min_available_memory_gb: 12
+    min_disk_mb: 6000
+    cpu_x86_avx2: true
+    gpu_vram_gb: 6             # 低于此值 → warning（不禁用）/ below → warning
+    gpu_optional: true
+
+# ---------------------------------------------------------------------------
+# 决策 / Decision
+# ---------------------------------------------------------------------------
+decision:
+  confidence_threshold: 0.6     # 低于此值触发联网 / below this → go online
+  max_reason_length: 20         # 理由最大字数 / max reason length
+  language: zh                  # zh | en
+  allow_online: true            # 总开关 / global online switch
+  upload_options: true          # 「仅联网、不上传选项」开关（默认开）
+                                # "online only, never upload options" switch (default on)
+  online_keywords:              # 含任一关键词即视为有时效性 / time-sensitive keywords
+    - 今天
+    - 最新
+    - 现在
+    - 价格
+    - 新闻
+    - 汇率
+    - 版本
+    - 发布
+    - 本周
+    - 当前
+    - 实时
+    - today
+    - latest
+    - now
+    - price
+    - news
+    - exchange rate
+    - version
+    - release
+
+# ---------------------------------------------------------------------------
+# 联网求助 / Online fallback
+# ---------------------------------------------------------------------------
+online:
+  timeout_seconds: 5            # 搜索超时（超时静默回退本地）
+  cache_ttl_hours: 24           # 相同 query 缓存 24 小时 / 24h cache for same query
+  max_results: 3                # 取 top3 标题+摘要 / top 3 titles + snippets
+  search:
+    provider: auto              # auto | serpapi | bing | brave | bing-web | mojeek | duckduckgo
+    serpapi_key_ref: serpapi_key    # 密钥引用名，真值在系统密钥库
+    bing_key_ref: bing_key
+    brave_key_ref: brave_key
+    duckduckgo_url: https://html.duckduckgo.com/html/   # 无 key 时的兜底 / no-key fallback
+    # 注意：查询在发送前会被关键词化（空格分隔的关键词比自然语言句子效果好得多）。
+    # Queries are keywordised before being sent — keywords score far better than sentences.
+
+# ---------------------------------------------------------------------------
+# 下载源 / Download sources（GitHub + Hugging Face 双主源）
+# ---------------------------------------------------------------------------
+download:
+  default_provider: github
+  default_mirror_by_provider:
+    github: official
+    huggingface: official
+  fallback_order:               # 多源降级顺序 / fallback order per provider
+    github: [official, ghproxy, ghfast]
+    huggingface: [official, hf-mirror]
+  timeout_seconds: 30
+  retry_per_source: 1
+  verify_sha256: true           # 完成必校验 SHA256 / always verify after download
+  resume_support: true          # Range 断点续传 / Range resume
+  allow_http_mirrors: false     # 只允许 https / https-only by default
+  follow_redirects: 5           # HF resolve 会 302 到 CDN / HF resolve redirects
+  providers:
+    github:
+      enabled: true
+      repo: qq2671016745/paimind-models              # owner/name
+      tag: v0.0.1
+      mirrors: [official, ghproxy, ghfast]
+    huggingface:
+      enabled: true
+      repo: qq2671016745/paimind-models
+      revision: main
+      private: false
+      mirrors: [official, hf-mirror]
+      auth_token_ref: hf_token          # 只存引用名 / reference only
+  custom_mirrors: []            # 用户自定义镜像 / user-defined mirrors
+
+# ---------------------------------------------------------------------------
+# 外部推理引擎 / External inference engines
+# 统一走 OpenAI 兼容 /v1/chat/completions。
+# All engines speak the OpenAI-compatible /v1/chat/completions contract.
+# ---------------------------------------------------------------------------
+engines:
+  ollama:
+    enabled: true
+    base_url: http://localhost:11434
+    openai_base_url: http://localhost:11434/v1
+    timeout_seconds: 2          # 探测超时 / probe timeout
+    api_key: null               # Ollama 不需要，任意非空即可 / any non-empty value
+    model_map:
+      L0: qwen2.5:0.5b
+      L1: qwen2.5:1.5b
+      L2: qwen2.5:3b
+      L3: qwen2.5:7b
+    modelfile_params:
+      temperature: 0.6
+      num_ctx: 4096
+
+  vllm:
+    enabled: true
+    base_url: http://localhost:8000
+    openai_base_url: http://localhost:8000/v1
+    timeout_seconds: 2
+    api_key: null
+    model_map:
+      L0: Qwen/Qwen2.5-0.5B-Instruct-AWQ
+      L1: Qwen/Qwen2.5-1.5B-Instruct-AWQ
+      L2: Qwen/Qwen2.5-3B-Instruct-AWQ
+      L3: Qwen/Qwen2.5-7B-Instruct-AWQ
+    requires_nvidia_gpu: true   # 无 NVIDIA GPU 时该模式整体 disabled
+    default_max_model_len: 4096
+
+  llamacpp:
+    enabled: true
+    base_url: http://localhost:8080
+    openai_base_url: http://localhost:8080/v1
+    timeout_seconds: 2
+    api_key: null
+    model_map:
+      L0: qwen2.5-0.5b-q4_k_m.gguf
+      L1: qwen2.5-1.5b-q4_k_m.gguf
+      L2: qwen2.5-3b-q4_k_m.gguf
+      L3: qwen2.5-7b-q4_k_m.gguf
+    default_context: 2048
+
+  docker:
+    enabled: true
+    socket: unix:///var/run/docker.sock
+    windows_named_pipe: \\\\.\\pipe\\docker_engine
+    timeout_seconds: 3
+    containers:                 # 容器名 -> 引擎 / container name -> engine
+      ollama: ollama
+      vllm: vllm-openai
+
+# ---------------------------------------------------------------------------
+# 安全 / Security（只有引用名，没有密钥）
+# ---------------------------------------------------------------------------
+security:
+  hf_token_ref: hf_token
+  api_token_ref: api_token
+  hf_mirror_send_token: false   # token 只发 huggingface.co / token only to huggingface.co
+  keyring_service: paimind
+
+# ---------------------------------------------------------------------------
+# API 服务 / API server
+# ---------------------------------------------------------------------------
+api:
+  host: 127.0.0.1               # 默认只听本机 / localhost only by default
+  port: 8686
+  # 跨源白名单：PWA / 桌面端 / 手机浏览器访问 API 时必须在列内，否则浏览器直接拦掉
+  # （症状是 fetch 报 "Failed to fetch"，但服务端日志里根本没有请求）。
+  # CORS allow-list: the PWA, desktop and mobile browser must be listed here or the
+  # browser blocks the request ("Failed to fetch", and nothing reaches the server).
+  # 开发时把静态服务器端口加进来；生产环境留具体源，不要写 "*"。
+  # Add your static-server port when developing; use concrete origins in production.
+  cors_origins:
+    - http://127.0.0.1:8686
+    - http://localhost:8686
+    - http://127.0.0.1:5180
+    - http://localhost:5180
+    - http://127.0.0.1:8777      # PWA 开发服务器 / PWA dev server
+    - http://localhost:8777
+  rate_limit_per_minute: 60
+  enable_auth: false            # 开启后需要 Authorization: Bearer
+
+# ---------------------------------------------------------------------------
+# 日志 / Logging
+# ---------------------------------------------------------------------------
+logging:
+  log_downloads: true
+  log_uploads: true
+  redact_patterns:
+    - "hf_[A-Za-z0-9]{20,}"
+    - "Bearer\\s+[A-Za-z0-9._-]{20,}"

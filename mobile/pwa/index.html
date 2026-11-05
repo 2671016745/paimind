@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#14161B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>应急食品 · paimind</title>
+<link rel="manifest" href="manifest.json">
+<script>
+/* 在首次绘制前应用主题，避免闪一下深色 / apply theme before first paint */
+try {
+  if (localStorage.getItem('paimind.theme') === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">🍙</span>
+      <span class="name">应急食品</span>
+    </div>
+    <div class="chips">
+      <span class="chip" id="chipTier">档位 -</span>
+      <span class="chip" id="chipBackend">内置</span>
+      <span class="chip" id="chipApi">API -</span>
+    </div>
+  </header>
+
+  <main id="page-decision" class="page active">
+    <section class="card">
+      <label class="label">问题</label>
+      <textarea id="question" rows="3" placeholder="例如：周末两天，预算 500，两个人出行，去哪里？"></textarea>
+      <p class="hint" id="questionHint"></p>
+
+      <label class="label">选项（至少 2 个）</label>
+      <div class="optrow">
+        <input id="optionInput" type="text" enterkeyhint="done" placeholder="输入选项，回车添加">
+        <button id="optionAdd" class="btn">添加</button>
+      </div>
+      <ul id="options" class="options"></ul>
+      <p class="hint warn" id="optionsHint"></p>
+
+      <div class="actions">
+        <button id="btnDecide" class="btn primary" disabled>开始决策</button>
+        <button id="btnAgain" class="btn" disabled>重新决策</button>
+        <button id="btnOnline" class="btn" disabled>强制联网</button>
+        <button id="btnClear" class="btn ghost">清空</button>
+      </div>
+    </section>
+
+    <section class="card result" id="resultCard">
+      <div class="result-head">
+        <span class="label">结果</span>
+        <span class="badge" id="badge">本地</span>
+      </div>
+      <div class="selected" id="selected">尚未决策</div>
+      <div class="reason" id="reason"></div>
+      <div class="confidence" id="confidence"></div>
+      <div class="alt-wrap" id="altWrap" hidden>
+        <div class="label sm">候选排序</div>
+        <div id="alternatives" class="alts"></div>
+      </div>
+      <div class="src-wrap" id="srcWrap" hidden>
+        <div class="label sm">来源</div>
+        <div id="sources" class="srcs"></div>
+      </div>
+      <div class="status" id="status"></div>
+    </section>
+  </main>
+
+  <main id="page-settings" class="page">
+    <section class="card">
+      <div class="label">档位</div>
+      <div id="tierCards" class="tiers"></div>
+    </section>
+
+    <section class="card">
+      <div class="label">硬件</div>
+      <div id="hardware" class="kv"></div>
+      <button class="btn" id="btnRefreshHw">重新检测硬件</button>
+    </section>
+
+    <section class="card">
+      <div class="label">下载源（简化）</div>
+      <div id="sources" class="sources"></div>
+    </section>
+
+    <section class="card">
+      <div class="label">Hugging Face（简化）</div>
+      <div id="hfBox" class="kv"></div>
+    </section>
+
+    <section class="card dev" id="devCard" hidden>
+      <div class="label">开发者选项</div>
+      <div class="optrow">
+        <input id="devApi" type="text" placeholder="API 地址，如 http://192.168.18.11:8686">
+        <button class="btn" id="devApiSave">保存</button>
+      </div>
+      <div class="optrow">
+        <input id="devOllama" type="text" placeholder="局域网 Ollama 地址，如 http://192.168.1.10:11434">
+        <button class="btn" id="devOllamaSave">保存</button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <button class="tab active" data-page="page-decision">决策</button>
+    <button class="tab" data-page="page-settings">设置</button>
+    <button class="tab" id="devToggle">开发者</button>
+    <button class="tab" id="themeToggle">浅色</button>
+  </nav>
+</div>
+
+<div id="modal" class="modal" hidden>
+  <div class="modal-card">
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<script src="app.js?v=2"></script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+name: paimind
+description: 应急食品 · 本地小模型决策助手（Flutter 手机版）
+publish_to: "none"
+version: 0.0.1+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+  # Flutter 3.22+
+  flutter: ">=3.22.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # ONNX Runtime on-device inference.  Android/iOS ship the same INT4 ONNX
+  # graphs the desktop app downloads; the model directory is shared via the
+  # platform file provider, see docs/deploy.md §移动打包.
+  onnxruntime: ^1.4.1
+
+  # Local storage for the runtime tier/mode and the privacy switch.
+  shared_preferences: ^2.3.2
+
+  # Hugging Face login + upload (simplified: single tier).
+  http: ^1.2.2
+
+  # Keychain / Keystore-backed token storage.
+  flutter_secure_storage: ^9.2.2
+
+  # App-support directory: where the downloaded tier models are unpacked.
+  path_provider: ^2.1.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/

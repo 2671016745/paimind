@@ -1,0 +1,54 @@
+# vLLM 容器化部署 —— **需要 NVIDIA GPU + Linux**（Windows / macOS 不支持）
+#
+# 前置：
+#   1. Linux 主机 + NVIDIA GPU，驱动 >= 535
+#   2. 安装 nvidia-container-toolkit
+#      Ubuntu/Debian:
+#        curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyboxes/nvidia-container-toolkit-keyring.gpg
+#        sudo apt-get install -y nvidia-container-toolkit
+#        sudo nvidia-ctk runtime configure --runtime=docker && sudo systemctl restart docker
+#   3. 验证：docker run --rm --gpus all nvidia/cuda:12.4.0-base-ubuntu22.04 nvidia-smi
+#
+# 启动（7B AWQ，约 4–6 GB 显存）：
+#   docker compose -f deploy/docker-compose.vllm.yml up -d
+#   curl http://localhost:8000/v1/models
+#
+# App 侧：engines.vllm.base_url 默认 http://localhost:8000，无需改动。
+
+services:
+  vllm:
+    image: vllm/vllm-openai:latest
+    container_name: vllm-openai
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      HUGGINGFACE_HUB_TOKEN: "${HF_TOKEN:-}"
+      VLLM_WORKER_MULTIPROC_METHOD: spawn
+    volumes:
+      - vllm-cache:/root/.cache/huggingface
+    # 7B AWQ 建议 max-model-len 4096；显存 4–8 GB 时按下面说明调小
+    command: >
+      --model Qwen/Qwen2.5-7B-Instruct-AWQ
+      --quantization awq
+      --max-model-len 4096
+      --host 0.0.0.0
+      --port 8000
+      --dtype auto
+      --gpu-memory-utilization 0.90
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+
+volumes:
+  vllm-cache:

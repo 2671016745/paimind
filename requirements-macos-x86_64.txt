@@ -1,0 +1,29 @@
+# macOS Intel (x86_64) 依赖 / macOS Intel (x86_64) dependencies
+#
+# 与 arm64 版的区别：
+#   * Intel Mac 必须检测 AVX2（Apple Silicon 跳过该检查，因为没有 x86 指令集概念）。
+#     判定逻辑见 core/hardware.py 的 _avx2_macos()。
+#   * 无独立显卡的 Intel Mac 只走 CPU EP；有独显时 CoreML EP 优先。
+#
+# Differences from the arm64 file:
+#   * Intel Macs DO run the AVX2 check (Apple Silicon skips it — no x86 ISA).
+#     See _avx2_macos() in core/hardware.py.
+#   * Intel Macs without a discrete GPU stay on CPU EP; with one, CoreML EP wins.
+
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+pydantic==2.14.2
+pydantic-settings==2.16.2
+pyyaml==6.0.3
+requests==2.34.2
+httpx==0.28.1
+huggingface_hub==2.4.0
+keyring==25.7.0
+onnxruntime==1.31.1
+tokenizers==0.23.3
+numpy==2.5.4
+PySide6==6.12.0
+python-multipart==0.0.33
+
+pytest==9.2.0
+pytest-asyncio==1.4.1

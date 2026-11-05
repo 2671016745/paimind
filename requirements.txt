@@ -1,0 +1,28 @@
+# paimind 桌面版 + API 服务端依赖（Windows / Linux 通用）
+# Desktop + API server dependencies (Windows / Linux).
+#
+# 安装 / Install:
+#   uv venv --python 3.12 .venv
+#   uv pip install --python .venv/Scripts/python.exe -r requirements.txt
+#
+# 版本已在本机实测（Windows 10 / Python 3.12.15），全部可装可用。
+# Versions verified on this machine (Windows 10, Python 3.12.15).
+
+fastapi==0.162.0          # HTTP API 框架 / HTTP API framework
+uvicorn[standard]==0.54.0 # ASGI 服务器 / ASGI server
+pydantic==2.14.2          # 数据契约 / data contract
+pydantic-settings==2.16.2 # 配置绑定 / settings binding
+pyyaml==6.0.3             # config.yaml 解析 / config.yaml parsing
+requests==2.34.2          # 下载 / downloads
+httpx==0.28.1             # 搜索与引擎调用 / search + engine calls
+huggingface_hub==2.4.0    # HF 下载与上传（LFS 自动）/ HF download + upload (LFS built in)
+keyring==25.7.0           # 系统密钥库 / system keyring
+onnxruntime==1.31.1       # 内置推理（CPU）/ bundled inference (CPU)
+tokenizers==0.23.3        # 读取 tokenizer.json / read tokenizer.json
+numpy==2.5.4              # ONNX 推理张量 / ONNX tensors
+PySide6==6.12.0           # 桌面 UI / desktop UI
+python-multipart==0.0.33  # 上传表单 / upload forms
+
+# --- 测试 / Tests ---
+pytest==9.2.0
+pytest-asyncio==1.4.1
