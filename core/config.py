@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import copy
 import os
+import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -25,11 +26,19 @@ APP_VERSION = "0.0.1"
 
 
 def project_root() -> Path:
-    """Directory containing ``config.yaml`` — the repo root when running from source."""
+    """Directory containing ``config.yaml`` — the repo root when running from source.
+
+    打包成 exe 后 ``__file__`` 指向 PyInstaller 的临时解包目录，配置和模型必须
+    落在 exe 旁边，否则每次启动都是空配置。
+    *Frozen builds resolve ``__file__`` to PyInstaller's temp dir, so config and
+    models must live next to the executable instead.*
+    """
 
     env = os.environ.get("PAIMIND_ROOT")
     if env:
         return Path(env)
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
     return Path(__file__).resolve().parent.parent
 
 
