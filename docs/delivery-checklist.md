@@ -69,7 +69,7 @@
 | **Docker 镜像构建** | ✅ 成功（`paimind-api:check`，用阿里源）。容器启动 healthy，`/health` 正常，错误码正确。 |
 | **Docker 连 Ollama 端到端** | ✅ **已跑通** —— `docker run ollama/ollama` + App 切 ollama 模式，真实决策经容器内 qwen2.5:0.5b 完成（backend=ollama，选中「近郊露营」）。 |
 | **GitHub 仓库** | ✅ https://github.com/2671016745/paimind （public，158 文件，2 次提交） |
-| **HF 模型仓库** | ✅ https://huggingface.co/qq2671016745/paimind-models （上传中） |
+| **HF 模型仓库** | ✅ https://huggingface.co/qq2671016745/paimind-models （93 → 94 文件，L1 GGUF 已上传） |
 | **Flutter APK 编译** | ✅ **已产出** —— `app-release.apk` 72.6 MB，`com.example.paimind` v0.0.1，compileSdk 36 / minSdk 24 / targetSdk 36，已签名。`flutter analyze` No issues found。 |
 | **Flutter Web 构建** | ❌ 不支持 —— ONNX Runtime 依赖 `dart:ffi`，浏览器无法运行；这是平台限制，非代码问题。 |
 | **macOS 打包** | ⚠️ 未验证 —— 需 macOS 环境。签名/公证命令已写入文档。 |
