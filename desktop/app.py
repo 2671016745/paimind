@@ -725,18 +725,42 @@ class SettingsTab(QWidget):
 
     def _download_tier(self, tier: str) -> None:
         dialog = QDialog(self)
-        dialog.setWindowTitle("下载源选择")
+        dialog.setWindowTitle(f"下载源选择 · {tier}")
+        dialog.setMinimumWidth(620)
         form = QFormLayout(dialog)
         provider = QComboBox()
         provider.addItems(["github", "huggingface"])
         mirror = QComboBox()
         form.addRow("Provider", provider)
         form.addRow("Mirror", mirror)
-        info = QLabel("")
+
+        # 该档位真实存在的文件名：测速得用它才有意义（否则全是 404）。
+        filename = ""
+        try:
+            for t in self.client.models().get("tiers", []):
+                if t.get("tier") == tier:
+                    for f in t.get("files_present") or []:
+                        if f != "manifest.json":
+                            filename = f
+                            break
+                    break
+        except Exception:
+            pass
+
+        info = QLabel("点「测速全部源」比较各源延迟")
         form.addRow(info)
+
+        results = QListWidget()
+        results.setMinimumHeight(160)
+        results.setAlternatingRowColors(True)
+        form.addRow("测速结果", results)
+
+        test_btn = QPushButton("测速全部源")
         buttons = QHBoxLayout()
         ok = QPushButton("开始下载")
         cancel = QPushButton("取消")
+        buttons.addWidget(test_btn)
+        buttons.addStretch(1)
         buttons.addWidget(ok)
         buttons.addWidget(cancel)
         form.addRow(buttons)
@@ -749,11 +773,62 @@ class SettingsTab(QWidget):
             mirror.clear()
             for group in payload.get("groups", []):
                 if group["provider"] == provider.currentText():
-                    mirror.addItems([m["name"] for m in group["mirrors"]])
-            info.setText(f"预计 URL 模板变量将在确认后展开")
+                    for m in group["mirrors"]:
+                        mirror.addItem(m["name"], m["id"])
 
         provider.currentTextChanged.connect(fill_mirrors)
         fill_mirrors()
+
+        # --- 测速（放线程里，别卡住界面）---------------------------------
+        class _Tester(QThread):
+            done = Signal(list)
+
+            def __init__(self, client, tier: str, filename: str):
+                super().__init__()
+                self.client = client
+                self.tier = tier
+                self.filename = filename
+
+            def run(self):
+                self.done.emit(self.client.test_mirrors(self.tier, self.filename))
+
+        def show_results(rows: List[Dict[str, Any]]) -> None:
+            results.clear()
+            fastest = None
+            for r in rows:
+                if r["ok"] and fastest is None:
+                    fastest = r
+                lat = r["latency_ms"]
+                lat_txt = f"{lat:.0f} ms" if isinstance(lat, (int, float)) else "超时"
+                msg = (r["message"] or "").replace("HTTP ", "").strip()
+                if len(msg) > 20:
+                    msg = msg[:19] + "…"
+                mark = "[OK]  " if r["ok"] else "[FAIL]"
+                results.addItem(f"{mark} {r['name']} ({r['provider']})  {lat_txt}  {msg}")
+            if fastest:
+                info.setText(f"最快可用：{fastest['name']}  {fastest['latency_ms']:.0f} ms（已自动选中）")
+                # 最快可用的源可能属于另一个 provider，先切过去
+                pidx = provider.findText(fastest["provider"])
+                if pidx >= 0:
+                    provider.setCurrentIndex(pidx)
+                idx = mirror.findData(fastest["mirror_id"])
+                if idx >= 0:
+                    mirror.setCurrentIndex(idx)
+            else:
+                info.setText("没有测通的源")
+            test_btn.setEnabled(True)
+            test_btn.setText("重新测速")
+
+        def run_test() -> None:
+            test_btn.setEnabled(False)
+            test_btn.setText("测速中…")
+            results.clear()
+            results.addItem("正在逐个测试，请稍候…")
+            worker = _Tester(self.client, tier, filename)
+            worker.done.connect(show_results)
+            worker.start()
+
+        test_btn.clicked.connect(run_test)
         ok.clicked.connect(dialog.accept)
         cancel.clicked.connect(dialog.reject)
         if dialog.exec() != QDialog.Accepted:
@@ -761,7 +836,7 @@ class SettingsTab(QWidget):
 
         try:
             result = self.client.start_download(tier, provider.currentText(),
-                                                mirror.currentText())
+                                                mirror.currentData())
         except Exception as exc:
             QMessageBox.warning(self, "下载失败", str(exc))
             return

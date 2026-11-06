@@ -100,6 +100,53 @@ class ApiClient:
     def test_mirror(self, provider: str, mirror: str) -> Dict[str, Any]:
         return self.post(f"/v1/download-sources/{provider}/{mirror}/test")
 
+    def test_mirrors(self, tier: str = "L1", filename: str = "") -> List[Dict[str, Any]]:
+        """逐个测速所有源，按延迟从低到高排序返回。
+
+        失败的源排在最后（latency_ms 为 None），不会中断其余测速。
+        """
+        try:
+            sources = self.download_sources()
+        except Exception:
+            sources = {}
+        results: List[Dict[str, Any]] = []
+        for group in sources.get("groups", []):
+            provider = group.get("provider", "")
+            for m in group.get("mirrors", []):
+                if not isinstance(m, dict):
+                    continue
+                mid = str(m.get("id", ""))
+                if not mid:
+                    continue
+                try:
+                    r = self.post(
+                        f"/v1/download-sources/{provider}/{mid}/test",
+                        params={"tier": tier, "filename": filename},
+                    )
+                    results.append({
+                        "provider": provider,
+                        "mirror_id": mid,
+                        "name": m.get("name", mid),
+                        "ok": bool(r.get("ok")),
+                        "latency_ms": r.get("latency_ms"),
+                        "status_code": r.get("status_code"),
+                        "message": r.get("message") or "",
+                    })
+                except Exception as exc:
+                    results.append({
+                        "provider": provider,
+                        "mirror_id": mid,
+                        "name": m.get("name", mid),
+                        "ok": False,
+                        "latency_ms": None,
+                        "status_code": None,
+                        "message": str(exc),
+                    })
+        # 能用的源排前面（按延迟），不可用的沉底，避免「最快但 404」误导
+        results.sort(key=lambda x: (not x["ok"], x["latency_ms"] is None,
+                                    x["latency_ms"] or 0))
+        return results
+
     def restore_sources(self) -> Dict[str, Any]:
         return self.post("/v1/download-sources/restore-defaults")
 
